@@ -1,0 +1,405 @@
+openapi: 3.0.3
+info:
+  title: JouleSight
+  version: 0.1.0
+  description: >-
+    Energy, latency, and accuracy planning for image classification on IoT edge devices.
+  x-product-slug: ai-iot-joulesight
+  x-source: ai-in-iot/1902.11119v1/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Devices
+  - name: Workloads
+  - name: Profiles
+  - name: Predictions
+  - name: Deploys
+paths:
+  /v1/device-classes:
+    get:
+      operationId: listDeviceClasses
+      tags: [Devices]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      parameters: [{ $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/Limit" }]
+      responses:
+        "200":
+          description: Device classes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeDeviceClass" }
+    post:
+      operationId: createDeviceClass
+      tags: [Devices]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeviceClassCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeDeviceClass" }
+  /v1/device-classes/{deviceClassId}:
+    parameters: [{ name: deviceClassId, in: path, required: true, schema: { type: string } }]
+    get:
+      operationId: getDeviceClass
+      tags: [Devices]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      responses:
+        "200":
+          description: Device class
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeDeviceClass" }
+  /v1/workloads:
+    get:
+      operationId: listWorkloads
+      tags: [Workloads]
+      security: [{ BearerAuth: [] }]
+      parameters: [{ $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/Limit" }]
+      responses:
+        "200":
+          description: Workloads
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeWorkload" }
+    post:
+      operationId: createWorkload
+      tags: [Workloads]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WorkloadCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeWorkload" }
+  /v1/profiles:
+    get:
+      operationId: listProfileCampaigns
+      tags: [Profiles]
+      security: [{ BearerAuth: [] }]
+      parameters: [{ $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/Limit" }]
+      responses:
+        "200":
+          description: Profile campaigns
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeProfileCampaign" }
+    post:
+      operationId: createProfileCampaign
+      tags: [Profiles]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProfileCampaignCreate" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeProfileCampaign" }
+  /v1/profiles/{campaignId}/samples:
+    parameters: [{ name: campaignId, in: path, required: true, schema: { type: string } }]
+    post:
+      operationId: ingestEnergySample
+      tags: [Profiles]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnergySampleCreate" }
+      responses:
+        "201":
+          description: Ingested
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeEnergySample" }
+  /v1/predictions:
+    post:
+      operationId: createEnergyPrediction
+      tags: [Predictions]
+      security: [{ ApiKeyAuth: [] }, { BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PredictionRequest" }
+      responses:
+        "200":
+          description: Prediction
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopePrediction" }
+  /v1/deploys:
+    get:
+      operationId: listDeployConfigs
+      tags: [Deploys]
+      security: [{ BearerAuth: [] }]
+      parameters: [{ $ref: "#/components/parameters/Cursor" }, { $ref: "#/components/parameters/Limit" }]
+      responses:
+        "200":
+          description: Deploy configs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ListEnvelopeDeployConfig" }
+    post:
+      operationId: approveDeployConfig
+      tags: [Deploys]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeployConfigCreate" }
+      responses:
+        "201":
+          description: Approved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DataEnvelopeDeployConfig" }
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+    DeviceClass:
+      type: object
+      required: [id, name, peakWatts]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        peakWatts: { type: number }
+        sleepMilliWatts: { type: number }
+        ramMb: { type: integer }
+    DeviceClassCreate:
+      type: object
+      required: [name, peakWatts]
+      properties:
+        name: { type: string }
+        peakWatts: { type: number }
+        sleepMilliWatts: { type: number }
+        ramMb: { type: integer }
+    Workload:
+      type: object
+      required: [id, name, imageWidth, imageHeight, accuracyFloor]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        imageWidth: { type: integer }
+        imageHeight: { type: integer }
+        datasetSize: { type: integer }
+        accuracyFloor: { type: number }
+        latencyMsMax: { type: integer }
+        dutyCycle: { type: string, enum: [continuous, event_triggered] }
+    WorkloadCreate:
+      type: object
+      required: [name, imageWidth, imageHeight, accuracyFloor]
+      properties:
+        name: { type: string }
+        imageWidth: { type: integer }
+        imageHeight: { type: integer }
+        datasetSize: { type: integer }
+        accuracyFloor: { type: number }
+        latencyMsMax: { type: integer }
+        dutyCycle: { type: string, enum: [continuous, event_triggered] }
+    ProfileCampaign:
+      type: object
+      required: [id, deviceClassId, algorithm, phase, status]
+      properties:
+        id: { type: string }
+        deviceClassId: { type: string }
+        algorithm: { type: string }
+        phase: { type: string, enum: [train, test, infer] }
+        meterId: { type: string }
+        status: { type: string, enum: [open, sealed] }
+    ProfileCampaignCreate:
+      type: object
+      required: [deviceClassId, algorithm, phase]
+      properties:
+        deviceClassId: { type: string }
+        algorithm: { type: string }
+        phase: { type: string, enum: [train, test, infer] }
+        meterId: { type: string }
+    EnergySample:
+      type: object
+      required: [id, campaignId, joules, durationMs]
+      properties:
+        id: { type: string }
+        campaignId: { type: string }
+        joules: { type: number }
+        durationMs: { type: integer }
+        accuracy: { type: number }
+        imageWidth: { type: integer }
+        imageHeight: { type: integer }
+    EnergySampleCreate:
+      type: object
+      required: [joules, durationMs]
+      properties:
+        joules: { type: number }
+        durationMs: { type: integer }
+        accuracy: { type: number }
+        imageWidth: { type: integer }
+        imageHeight: { type: integer }
+    PredictionRequest:
+      type: object
+      required: [deviceClassId, workloadId, algorithm]
+      properties:
+        deviceClassId: { type: string }
+        workloadId: { type: string }
+        algorithm: { type: string }
+        phase: { type: string, enum: [train, test, infer], default: infer }
+        includeCloudOffload: { type: boolean, default: true }
+    Prediction:
+      type: object
+      required: [id, predictedJoules, predictedDurationMs, confidence]
+      properties:
+        id: { type: string }
+        predictedJoules: { type: number }
+        predictedDurationMs: { type: integer }
+        predictedAccuracy: { type: number }
+        confidence: { type: number }
+        cloudOffloadJoules: { type: number }
+        meetsAccuracyFloor: { type: boolean }
+        harvestBudgetOk: { type: boolean }
+    DeployConfig:
+      type: object
+      required: [id, siteId, deviceClassId, algorithm, status]
+      properties:
+        id: { type: string }
+        siteId: { type: string }
+        deviceClassId: { type: string }
+        algorithm: { type: string }
+        imageWidth: { type: integer }
+        imageHeight: { type: integer }
+        status: { type: string, enum: [draft, approved, revoked] }
+        predictionId: { type: string }
+    DeployConfigCreate:
+      type: object
+      required: [siteId, deviceClassId, algorithm]
+      properties:
+        siteId: { type: string }
+        deviceClassId: { type: string }
+        algorithm: { type: string }
+        imageWidth: { type: integer }
+        imageHeight: { type: integer }
+        predictionId: { type: string }
+    DataEnvelopeDeviceClass:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/DeviceClass" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeDeviceClass:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/DeviceClass" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopeWorkload:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/Workload" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeWorkload:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/Workload" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopeProfileCampaign:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/ProfileCampaign" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeProfileCampaign:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/ProfileCampaign" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopeEnergySample:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/EnergySample" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopePrediction:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/Prediction" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    DataEnvelopeDeployConfig:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: "#/components/schemas/DeployConfig" }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
+    ListEnvelopeDeployConfig:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items: { type: array, items: { $ref: "#/components/schemas/DeployConfig" } }
+            nextCursor: { type: string }
+        meta: { $ref: "#/components/schemas/ResponseMeta" }
